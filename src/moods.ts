@@ -1,0 +1,106 @@
+import type { Mood } from './types';
+
+export const MOODS: Mood[] = [
+  {
+    id: 'happy',
+    name: 'Happy & Energetic',
+    emoji: '😊',
+    color: 'from-yellow-400 to-orange-500',
+    description: 'Upbeat and joyful vibes',
+    audioFeatures: {
+      energy: [0.6, 1.0],
+      valence: [0.6, 1.0],
+      danceability: [0.5, 1.0],
+      tempo: [120, 180],
+    },
+  },
+  {
+    id: 'chill',
+    name: 'Chill & Relaxed',
+    emoji: '😌',
+    color: 'from-blue-400 to-cyan-500',
+    description: 'Laid-back and mellow',
+    audioFeatures: {
+      energy: [0.2, 0.6],
+      valence: [0.3, 0.7],
+      acousticness: [0.3, 1.0],
+      tempo: [60, 110],
+    },
+  },
+  {
+    id: 'workout',
+    name: 'Workout & Motivated',
+    emoji: '💪',
+    color: 'from-red-500 to-pink-600',
+    description: 'High energy for exercise',
+    audioFeatures: {
+      energy: [0.7, 1.0],
+      danceability: [0.6, 1.0],
+      tempo: [130, 180],
+    },
+  },
+  {
+    id: 'sad',
+    name: 'Sad & Reflective',
+    emoji: '😢',
+    color: 'from-gray-400 to-blue-600',
+    description: 'Emotional and introspective',
+    audioFeatures: {
+      energy: [0.1, 0.5],
+      valence: [0.0, 0.4],
+      acousticness: [0.4, 1.0],
+      tempo: [60, 100],
+    },
+  },
+  {
+    id: 'party',
+    name: 'Party & Dance',
+    emoji: '🎉',
+    color: 'from-purple-500 to-pink-500',
+    description: 'Club bangers and dance hits',
+    audioFeatures: {
+      energy: [0.7, 1.0],
+      danceability: [0.7, 1.0],
+      valence: [0.5, 1.0],
+      tempo: [120, 150],
+    },
+  },
+  {
+    id: 'romantic',
+    name: 'Romantic',
+    emoji: '💝',
+    color: 'from-pink-400 to-rose-500',
+    description: 'Love songs and slow jams',
+    audioFeatures: {
+      energy: [0.2, 0.6],
+      valence: [0.4, 0.8],
+      acousticness: [0.3, 0.8],
+      tempo: [70, 110],
+    },
+  },
+  {
+    id: 'sleep',
+    name: 'Sleep & Peaceful',
+    emoji: '🌙',
+    color: 'from-indigo-400 to-purple-600',
+    description: 'Calm and soothing sounds',
+    audioFeatures: {
+      energy: [0.0, 0.3],
+      valence: [0.2, 0.6],
+      acousticness: [0.6, 1.0],
+      tempo: [50, 90],
+    },
+  },
+  {
+    id: 'focus',
+    name: 'Focus & Study',
+    emoji: '📚',
+    color: 'from-green-400 to-teal-500',
+    description: 'Concentration and productivity',
+    audioFeatures: {
+      energy: [0.3, 0.6],
+      acousticness: [0.5, 1.0],
+      tempo: [80, 120],
+    },
+  },
+];
