@@ -4,7 +4,10 @@
 import type { Mood, UserProfile, PlaylistTrack } from './types';
 
 const CLIENT_ID = '569c040366e34a1b97045c880da135ab';
-const REDIRECT_URI = 'http://localhost:8888/callback';
+// Auto-detect: localhost for testing, vercel URL for production
+const REDIRECT_URI = window.location.hostname === 'localhost' 
+  ? 'http://localhost:8888/callback'
+  : `${window.location.origin}/callback`;
 const SCOPES = [
   'user-read-private',
   'user-read-email',
