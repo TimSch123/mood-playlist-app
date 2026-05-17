@@ -158,63 +158,52 @@ export async function getUserTopTracks(limit: number = 50): Promise<PlaylistTrac
 
 // Search for tracks based on mood
 export async function searchTracksByMood(mood: Mood, limit: number = 30): Promise<PlaylistTrack[]> {
-  // Try using top tracks as seeds first
-  try {
-    const topData = await spotifyFetch(`/me/top/tracks?limit=5`);
-    
-    if (topData.items && topData.items.length > 0) {
-      const seedIds = topData.items.slice(0, 3).map((t: any) => t.id).join(',');
-      const params = new URLSearchParams({
-        seed_tracks: seedIds,
-        limit: String(limit),
-      });
-      const data = await spotifyFetch(`/recommendations?${params}`);
-      return data.tracks;
-    }
-  } catch (error) {
-    console.error('Top tracks failed, trying genre seeds:', error);
-  }
+  // NOTE: Recommendations API requires Extended Quota Mode in Spotify Developer Dashboard
+  // Using search API as fallback which works in Development Mode
   
-  // Fallback: Use genre seeds with valid Spotify genres
-  // These are verified genres from Spotify's available seed genres
-  const genreMap: { [key: string]: string[] } = {
-    happy: ['pop', 'dance', 'happy'],
-    chill: ['acoustic', 'ambient', 'chill'],
-    workout: ['rock', 'work-out', 'power-pop'],
-    sad: ['sad', 'indie', 'emo'],
-    party: ['dance', 'edm', 'party'],
-    romantic: ['soul', 'romance', 'r-n-b'],
-    sleep: ['ambient', 'sleep', 'piano'],
-    focus: ['classical', 'study', 'ambient'],
+  // Mood-specific search queries that work great!
+  const searchQueries: { [key: string]: string[] } = {
+    happy: ['happy upbeat', 'feel good pop', 'dance party', 'positive vibes'],
+    chill: ['chill relax', 'lo-fi beats', 'acoustic calm', 'mellow vibes'],
+    workout: ['workout motivation', 'gym energy', 'running music', 'power workout'],
+    sad: ['sad emotional', 'heartbreak ballad', 'melancholy indie', 'crying'],
+    party: ['party dance', 'club bangers', 'edm festival', 'dance hits'],
+    romantic: ['romantic love', 'slow jams', 'r&b soul', 'love songs'],
+    sleep: ['sleep peaceful', 'relaxing piano', 'ambient calm', 'meditation'],
+    focus: ['study focus', 'concentration', 'classical piano', 'ambient work'],
   };
 
-  // Use multiple genres for better results (max 5 seeds total)
-  const genres = genreMap[mood.id] || ['pop'];
-  
-  const params = new URLSearchParams({
-    seed_genres: genres.slice(0, 5).join(','),
-    limit: String(limit),
-  });
+  const queries = searchQueries[mood.id] || ['pop music'];
+  const allTracks: PlaylistTrack[] = [];
+  const seenIds = new Set<string>();
 
-  // Add audio features from mood configuration
-  if (mood.audioFeatures.energy) {
-    params.append('target_energy', String((mood.audioFeatures.energy[0] + mood.audioFeatures.energy[1]) / 2));
-  }
-  if (mood.audioFeatures.valence) {
-    params.append('target_valence', String((mood.audioFeatures.valence[0] + mood.audioFeatures.valence[1]) / 2));
-  }
-  if (mood.audioFeatures.danceability) {
-    params.append('target_danceability', String((mood.audioFeatures.danceability[0] + mood.audioFeatures.danceability[1]) / 2));
-  }
-  if (mood.audioFeatures.acousticness) {
-    params.append('target_acousticness', String((mood.audioFeatures.acousticness[0] + mood.audioFeatures.acousticness[1]) / 2));
-  }
-  if (mood.audioFeatures.tempo) {
-    params.append('target_tempo', String((mood.audioFeatures.tempo[0] + mood.audioFeatures.tempo[1]) / 2));
+  // Search with multiple queries to get variety
+  for (const query of queries) {
+    try {
+      const params = new URLSearchParams({
+        q: query,
+        type: 'track',
+        limit: String(Math.ceil(limit / queries.length) + 5), // Get a few extra
+      });
+      
+      const data = await spotifyFetch(`/search?${params}`);
+      
+      // Add unique tracks
+      for (const track of data.tracks.items) {
+        if (!seenIds.has(track.id) && allTracks.length < limit) {
+          seenIds.add(track.id);
+          allTracks.push(track);
+        }
+      }
+      
+      if (allTracks.length >= limit) break;
+    } catch (error) {
+      console.error(`Search failed for "${query}":`, error);
+    }
   }
 
-  const data = await spotifyFetch(`/recommendations?${params}`);
-  return data.tracks;
+  // Shuffle for variety
+  return allTracks.sort(() => Math.random() - 0.5).slice(0, limit);
 }
 
 // Search for tracks by query
@@ -234,13 +223,86 @@ export async function getRecommendationsFromTracks(
   seedTrackIds: string[],
   limit: number = 30
 ): Promise<PlaylistTrack[]> {
-  const params = new URLSearchParams({
-    seed_tracks: seedTrackIds.slice(0, 5).join(','),
-    limit: String(limit),
-  });
-
-  const data = await spotifyFetch(`/recommendations?${params}`);
-  return data.tracks;
+  // NOTE: Recommendations API requires Extended Quota Mode
+  // Using search-based approach as workaround
+  
+  try {
+    // First, get the seed tracks to extract artists/genres
+    const seedTracks = [];
+    for (const id of seedTrackIds.slice(0, 3)) {
+      try {
+        const track = await spotifyFetch(`/tracks/${id}`);
+        seedTracks.push(track);
+      } catch (e) {
+        console.error('Failed to fetch seed track:', e);
+      }
+    }
+    
+    if (seedTracks.length === 0) {
+      throw new Error('Could not fetch seed tracks');
+    }
+    
+    // Extract artist names and search for similar music
+    const artists = seedTracks.flatMap(t => t.artists.map((a: any) => a.name)).slice(0, 3);
+    const allTracks: PlaylistTrack[] = [];
+    const seenIds = new Set(seedTrackIds);
+    
+    // Search for tracks by these artists
+    for (const artist of artists) {
+      try {
+        const params = new URLSearchParams({
+          q: `artist:${artist}`,
+          type: 'track',
+          limit: String(Math.ceil(limit / artists.length)),
+        });
+        
+        const data = await spotifyFetch(`/search?${params}`);
+        
+        for (const track of data.tracks.items) {
+          if (!seenIds.has(track.id) && allTracks.length < limit) {
+            seenIds.add(track.id);
+            allTracks.push(track);
+          }
+        }
+      } catch (error) {
+        console.error(`Search failed for artist "${artist}":`, error);
+      }
+    }
+    
+    // If not enough tracks, do genre-based search
+    if (allTracks.length < limit) {
+      const genreQueries = ['pop hits', 'top tracks', 'new music'];
+      for (const query of genreQueries) {
+        if (allTracks.length >= limit) break;
+        
+        try {
+          const params = new URLSearchParams({
+            q: query,
+            type: 'track',
+            limit: String(10),
+          });
+          
+          const data = await spotifyFetch(`/search?${params}`);
+          
+          for (const track of data.tracks.items) {
+            if (!seenIds.has(track.id) && allTracks.length < limit) {
+              seenIds.add(track.id);
+              allTracks.push(track);
+            }
+          }
+        } catch (error) {
+          console.error(`Search failed for "${query}":`, error);
+        }
+      }
+    }
+    
+    // Shuffle and return
+    return allTracks.sort(() => Math.random() - 0.5).slice(0, limit);
+    
+  } catch (error) {
+    console.error('Vibe playlist generation failed:', error);
+    throw error;
+  }
 }
 
 // Create playlist in user's Spotify
