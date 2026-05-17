@@ -218,11 +218,11 @@ export async function getRecommendationsFromTracks(
   const params = new URLSearchParams({
     seed_tracks: seedTrackIds.slice(0, 5).join(','),
     limit: String(limit),
-    market: 'from_token',
   });
 
   const data = await spotifyFetch(`/recommendations?${params}`);
-  
+  return data.tracks;
+}
 
 // Create playlist in user's Spotify
 export async function createPlaylistOnSpotify(
