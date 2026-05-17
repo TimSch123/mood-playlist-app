@@ -181,10 +181,42 @@ export async function searchTracksByMood(mood: Mood, limit: number = 30): Promis
     params.append('target_tempo', String((audioFeatures.tempo[0] + audioFeatures.tempo[1]) / 2));
   }
 
-  // Get user's top artists as seeds
-  const topArtists = await spotifyFetch('/me/top/artists?limit=5');
-  const seedArtists = topArtists.items.slice(0, 3).map((a: any) => a.id).join(',');
-  params.append('seed_artists', seedArtists);
+  // Try to get user's top artists as seeds, fallback to genres
+  try {
+    const topArtists = await spotifyFetch('/me/top/artists?limit=5');
+    if (topArtists.items && topArtists.items.length > 0) {
+      const seedArtists = topArtists.items.slice(0, 3).map((a: any) => a.id).join(',');
+      params.append('seed_artists', seedArtists);
+    } else {
+      // Fallback: use genre seeds based on mood
+      const genreMap: { [key: string]: string[] } = {
+        happy: ['pop', 'dance', 'party'],
+        chill: ['chill', 'ambient', 'acoustic'],
+        workout: ['work-out', 'power', 'rock'],
+        sad: ['sad', 'piano', 'acoustic'],
+        party: ['party', 'dance', 'edm'],
+        romantic: ['romance', 'soul', 'r-n-b'],
+        sleep: ['sleep', 'ambient', 'piano'],
+        focus: ['study', 'classical', 'instrumental'],
+      };
+      const genres = genreMap[mood.id] || ['pop', 'indie', 'alternative'];
+      params.append('seed_genres', genres.join(','));
+    }
+  } catch (error) {
+    // Fallback: use genre seeds
+    const genreMap: { [key: string]: string[] } = {
+      happy: ['pop', 'dance', 'party'],
+      chill: ['chill', 'ambient', 'acoustic'],
+      workout: ['work-out', 'power', 'rock'],
+      sad: ['sad', 'piano', 'acoustic'],
+      party: ['party', 'dance', 'edm'],
+      romantic: ['romance', 'soul', 'r-n-b'],
+      sleep: ['sleep', 'ambient', 'piano'],
+      focus: ['study', 'classical', 'instrumental'],
+    };
+    const genres = genreMap[mood.id] || ['pop', 'indie', 'alternative'];
+    params.append('seed_genres', genres.join(','));
+  }
 
   const data = await spotifyFetch(`/recommendations?${params}`);
   return data.tracks;
