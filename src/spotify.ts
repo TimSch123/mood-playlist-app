@@ -157,7 +157,7 @@ export async function getUserTopTracks(limit: number = 50): Promise<PlaylistTrac
 }
 
 // Search for tracks based on mood
-ex
+export async function searchTracksByMood(mood: Mood, limit: number = 30): Promise<PlaylistTrack[]> {
   const genreMap: { [key: string]: string } = {
     happy: 'pop',
     chill: 'chill',
@@ -172,12 +172,10 @@ ex
   const genre = genreMap[mood.id] || 'pop';
   
   const params = new URLSearchParams({
-    seed_genres: genre, // Just ONE genre to be safe
+    seed_genres: genre,
     limit: String(limit),
-    market: 'from_token', // Auto-detect user's market
-  });f (audioFeatures.valence) {
-    params.append('target_valence', String((audioFeatures.valence[0] + audioFeatures.valence[1]) / 2));
-  }
+    market: 'from_token',
+  });
 
   const data = await spotifyFetch(`/recommendations?${params}`);
   return data.tracks;
@@ -201,8 +199,9 @@ export async function getRecommendationsFromTracks(
   limit: number = 30
 ): Promise<PlaylistTrack[]> {
   const params = new URLSearchParams({
-    seed_tracks: seedTrackIds.slice(0, 5).join(','), // Max 5 seeds
+    seed_tracks: seedTrackIds.slice(0, 5).join(','),
     limit: String(limit),
+    market: 'from_token',
   });
 
   const data = await spotifyFetch(`/recommendations?${params}`);
