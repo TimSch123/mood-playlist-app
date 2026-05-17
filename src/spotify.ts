@@ -180,10 +180,11 @@ export async function searchTracksByMood(mood: Mood, limit: number = 30): Promis
   // Search with multiple queries to get variety
   for (const query of queries) {
     try {
+      const tracksPerQuery = Math.max(1, Math.min(50, Math.ceil(limit / queries.length) + 5));
       const params = new URLSearchParams({
         q: query,
         type: 'track',
-        limit: String(Math.ceil(limit / queries.length) + 5), // Get a few extra
+        limit: String(tracksPerQuery), // Spotify requires 1-50
       });
       
       const data = await spotifyFetch(`/search?${params}`);
@@ -250,10 +251,11 @@ export async function getRecommendationsFromTracks(
     // Search for tracks by these artists
     for (const artist of artists) {
       try {
+        const tracksPerArtist = Math.max(1, Math.min(50, Math.ceil(limit / artists.length)));
         const params = new URLSearchParams({
           q: `artist:${artist}`,
           type: 'track',
-          limit: String(Math.ceil(limit / artists.length)),
+          limit: String(tracksPerArtist), // Spotify requires 1-50
         });
         
         const data = await spotifyFetch(`/search?${params}`);
