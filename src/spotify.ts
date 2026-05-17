@@ -180,41 +180,41 @@ export async function searchTracksByMood(mood: Mood, limit: number = 30): Promis
     params.append('target_tempo', String((audioFeatures.tempo[0] + audioFeatures.tempo[1]) / 2));
   }
 
-  // Try to get user's top artists as seeds, fallback to genres
+  // Use user's top tracks as seeds if available, otherwise use common genres
+  // Using ONLY genres from Spotify's official available-genre-seeds endpoint
   try {
-    const topArtists = await spotifyFetch('/me/top/artists?limit=5');
-    if (topArtists.items && topArtists.items.length > 0) {
-      const seedArtists = topArtists.items.slice(0, 3).map((a: any) => a.id).join(',');
-      params.append('seed_artists', seedArtists);
+    const topTracks = await spotifyFetch('/me/top/tracks?limit=5');
+    if (topTracks.items && topTracks.items.length > 0) {
+      const seedTracks = topTracks.items.slice(0, 3).map((t: any) => t.id).join(',');
+      params.append('seed_tracks', seedTracks);
     } else {
-      // Fallback: use genre seeds based on mood (using valid Spotify genres)
-      const genreMap: { [key: string]: string[] } = {
-        happy: ['pop', 'dance', 'happy'],
-        chill: ['chill', 'ambient', 'acoustic'],
-        workout: ['rock', 'metal', 'hip-hop'],
-        sad: ['sad', 'piano', 'indie'],
-        party: ['party', 'dance', 'electronic'],
-        romantic: ['romance', 'soul', 'jazz'],
-        sleep: ['sleep', 'ambient', 'classical'],
-        focus: ['classical', 'ambient', 'piano'],
+      // Fallback: Use verified genres that exist in Spotify's genre list
+      // These are confirmed from Spotify's available-genre-seeds
+      const genreMap: { [key: string]: string } = {
+        happy: 'happy,pop,dance',
+        chill: 'chill,acoustic,ambient',
+        workout: 'work-out,rock,hip-hop',
+        sad: 'sad,piano,indie',
+        party: 'party,dance,edm',
+        romantic: 'romance,soul,r-n-b',
+        sleep: 'sleep,ambient,piano',
+        focus: 'study,classical,ambient',
       };
-      const genres = genreMap[mood.id] || ['pop', 'indie', 'alternative'];
-      params.append('seed_genres', genres.slice(0, 3).join(','));
+      params.append('seed_genres', genreMap[mood.id] || 'pop,rock,indie');
     }
   } catch (error) {
-    // Fallback: use genre seeds (using valid Spotify genres)
-    const genreMap: { [key: string]: string[] } = {
-      happy: ['pop', 'dance', 'happy'],
-      chill: ['chill', 'ambient', 'acoustic'],
-      workout: ['rock', 'metal', 'hip-hop'],
-      sad: ['sad', 'piano', 'indie'],
-      party: ['party', 'dance', 'electronic'],
-      romantic: ['romance', 'soul', 'jazz'],
-      sleep: ['sleep', 'ambient', 'classical'],
-      focus: ['classical', 'ambient', 'piano'],
+    // Fallback: Use verified genres that exist in Spotify's genre list
+    const genreMap: { [key: string]: string } = {
+      happy: 'happy,pop,dance',
+      chill: 'chill,acoustic,ambient',
+      workout: 'work-out,rock,hip-hop',
+      sad: 'sad,piano,indie',
+      party: 'party,dance,edm',
+      romantic: 'romance,soul,r-n-b',
+      sleep: 'sleep,ambient,piano',
+      focus: 'study,classical,ambient',
     };
-    const genres = genreMap[mood.id] || ['pop', 'indie', 'alternative'];
-    params.append('seed_genres', genres.slice(0, 3).join(','));
+    params.append('seed_genres', genreMap[mood.id] || 'pop,rock,indie');
   }
 
   const data = await spotifyFetch(`/recommendations?${params}`);
