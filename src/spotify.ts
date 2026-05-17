@@ -137,7 +137,9 @@ async function spotifyFetch(endpoint: string, options: RequestInit = {}): Promis
   });
 
   if (!response.ok) {
-    throw new Error(`Spotify API error: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('Spotify API Error:', response.status, errorText);
+    throw new Error(`Spotify API error: ${response.status} - ${errorText}`);
   }
 
   return response.json();
@@ -155,34 +157,25 @@ export async function getUserTopTracks(limit: number = 50): Promise<PlaylistTrac
 }
 
 // Search for tracks based on mood
-export async function searchTracksByMood(mood: Mood, limit: number = 30): Promise<PlaylistTrack[]> {
-  // Simplest approach: use seed genres only with minimal params
-  // Audio features applied via target_ parameters
-  
+ex
   const genreMap: { [key: string]: string } = {
-    happy: 'pop,dance,happy',
-    chill: 'chill,ambient,acoustic',
-    workout: 'rock,hip-hop,work-out',
-    sad: 'indie,acoustic,sad',
-    party: 'party,dance,edm',
-    romantic: 'soul,r-n-b,romance',
-    sleep: 'ambient,classical,sleep',
-    focus: 'ambient,classical,study',
+    happy: 'pop',
+    chill: 'chill',
+    workout: 'rock',
+    sad: 'indie',
+    party: 'party',
+    romantic: 'soul',
+    sleep: 'ambient',
+    focus: 'classical',
   };
 
-  const genres = genreMap[mood.id] || 'pop,rock,indie';
+  const genre = genreMap[mood.id] || 'pop';
   
   const params = new URLSearchParams({
-    seed_genres: genres,
+    seed_genres: genre, // Just ONE genre to be safe
     limit: String(limit),
-  });
-
-  // Add only the most important audio features
-  const { audioFeatures } = mood;
-  if (audioFeatures.energy) {
-    params.append('target_energy', String((audioFeatures.energy[0] + audioFeatures.energy[1]) / 2));
-  }
-  if (audioFeatures.valence) {
+    market: 'from_token', // Auto-detect user's market
+  });f (audioFeatures.valence) {
     params.append('target_valence', String((audioFeatures.valence[0] + audioFeatures.valence[1]) / 2));
   }
 
