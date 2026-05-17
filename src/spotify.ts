@@ -158,18 +158,15 @@ export async function getUserTopTracks(limit: number = 50): Promise<PlaylistTrac
 
 // Search for tracks based on mood
 export async function searchTracksByMood(mood: Mood, limit: number = 30): Promise<PlaylistTrack[]> {
-  // First, try to get the user's top tracks to verify API access works
+  // Try using top tracks as seeds first
   try {
-    // Test if basic API works by getting top tracks
     const topData = await spotifyFetch(`/me/top/tracks?limit=5`);
     
-    // If we have top tracks, use them as seeds
     if (topData.items && topData.items.length > 0) {
       const seedIds = topData.items.slice(0, 3).map((t: any) => t.id).join(',');
       const params = new URLSearchParams({
         seed_tracks: seedIds,
         limit: String(limit),
-        market: 'from_token',
       });
       const data = await spotifyFetch(`/recommendations?${params}`);
       return data.tracks;
@@ -178,7 +175,7 @@ export async function searchTracksByMood(mood: Mood, limit: number = 30): Promis
     console.error('Top tracks failed, trying genre seeds:', error);
   }
   
-  // Fallback: Use genre seeds
+  // Fallback: Use genre seeds (NO market parameter - user token provides country)
   const genreMap: { [key: string]: string } = {
     happy: 'pop',
     chill: 'chill',
@@ -195,7 +192,6 @@ export async function searchTracksByMood(mood: Mood, limit: number = 30): Promis
   const params = new URLSearchParams({
     seed_genres: genre,
     limit: String(limit),
-    market: 'from_token',
   });
 
   const data = await spotifyFetch(`/recommendations?${params}`);
@@ -226,8 +222,7 @@ export async function getRecommendationsFromTracks(
   });
 
   const data = await spotifyFetch(`/recommendations?${params}`);
-  return data.tracks;
-}
+  
 
 // Create playlist in user's Spotify
 export async function createPlaylistOnSpotify(
