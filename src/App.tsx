@@ -135,6 +135,32 @@ function App() {
     });
   };
 
+  const handleOpenAllInSpotify = () => {
+    if (generatedTracks.length === 0) return;
+    
+    // Open first track immediately
+    window.open(generatedTracks[0].uri, '_blank');
+    
+    // Ask user if they want to open all (can be overwhelming)
+    if (generatedTracks.length > 1) {
+      const openAll = confirm(
+        `🎵 Open all ${generatedTracks.length} tracks in Spotify?\n\n` +
+        `This will open ${generatedTracks.length} tabs. ` +
+        `You can then add each song to a playlist in Spotify.\n\n` +
+        `Tip: Create a new playlist first in Spotify, then add songs as they open!`
+      );
+      
+      if (openAll) {
+        // Open remaining tracks with small delay to avoid browser blocking
+        generatedTracks.slice(1).forEach((track, index) => {
+          setTimeout(() => {
+            window.open(track.uri, '_blank');
+          }, index * 300); // 300ms delay between each
+        });
+      }
+    }
+  };
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     
@@ -430,6 +456,13 @@ function App() {
               </h2>
               <div className="flex gap-2">
                 <button
+                  onClick={handleOpenAllInSpotify}
+                  className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition-colors text-sm"
+                  title="Open tracks in Spotify app to add to playlist"
+                >
+                  📱 Open All
+                </button>
+                <button
                   onClick={handleCopyTrackList}
                   className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-full transition-colors text-sm"
                   title="Copy track list to clipboard"
@@ -446,6 +479,12 @@ function App() {
               </div>
             </div>
             <p className="text-gray-600 mb-4">{generatedTracks.length} tracks</p>
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded">
+              <p className="text-sm text-blue-800">
+                <strong>💡 Quick Tip:</strong> Click "📱 Open All" to open tracks in Spotify app, then add them to a playlist. 
+                Or click "Open ▶" on individual tracks. Much faster than manual search!
+              </p>
+            </div>
             <div className="space-y-3 max-h-[500px] overflow-y-auto">
               {generatedTracks.map((track) => (
                 <div
@@ -463,6 +502,15 @@ function App() {
                       {track.artists.map((a) => a.name).join(', ')} • {track.album.name}
                     </p>
                   </div>
+                  <a
+                    href={track.uri}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-spotify-green hover:bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-full transition-colors whitespace-nowrap"
+                    title="Open in Spotify app"
+                  >
+                    Open ▶
+                  </a>
                 </div>
               ))}
             </div>
