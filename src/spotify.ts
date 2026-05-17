@@ -175,24 +175,43 @@ export async function searchTracksByMood(mood: Mood, limit: number = 30): Promis
     console.error('Top tracks failed, trying genre seeds:', error);
   }
   
-  // Fallback: Use genre seeds (NO market parameter - user token provides country)
-  const genreMap: { [key: string]: string } = {
-    happy: 'pop',
-    chill: 'chill',
-    workout: 'rock',
-    sad: 'indie',
-    party: 'party',
-    romantic: 'soul',
-    sleep: 'ambient',
-    focus: 'classical',
+  // Fallback: Use genre seeds with valid Spotify genres
+  // These are verified genres from Spotify's available seed genres
+  const genreMap: { [key: string]: string[] } = {
+    happy: ['pop', 'dance', 'happy'],
+    chill: ['acoustic', 'ambient', 'chill'],
+    workout: ['rock', 'work-out', 'power-pop'],
+    sad: ['sad', 'indie', 'emo'],
+    party: ['dance', 'edm', 'party'],
+    romantic: ['soul', 'romance', 'r-n-b'],
+    sleep: ['ambient', 'sleep', 'piano'],
+    focus: ['classical', 'study', 'ambient'],
   };
 
-  const genre = genreMap[mood.id] || 'pop';
+  // Use multiple genres for better results (max 5 seeds total)
+  const genres = genreMap[mood.id] || ['pop'];
   
   const params = new URLSearchParams({
-    seed_genres: genre,
+    seed_genres: genres.slice(0, 5).join(','),
     limit: String(limit),
   });
+
+  // Add audio features from mood configuration
+  if (mood.audioFeatures.energy) {
+    params.append('target_energy', String((mood.audioFeatures.energy[0] + mood.audioFeatures.energy[1]) / 2));
+  }
+  if (mood.audioFeatures.valence) {
+    params.append('target_valence', String((mood.audioFeatures.valence[0] + mood.audioFeatures.valence[1]) / 2));
+  }
+  if (mood.audioFeatures.danceability) {
+    params.append('target_danceability', String((mood.audioFeatures.danceability[0] + mood.audioFeatures.danceability[1]) / 2));
+  }
+  if (mood.audioFeatures.acousticness) {
+    params.append('target_acousticness', String((mood.audioFeatures.acousticness[0] + mood.audioFeatures.acousticness[1]) / 2));
+  }
+  if (mood.audioFeatures.tempo) {
+    params.append('target_tempo', String((mood.audioFeatures.tempo[0] + mood.audioFeatures.tempo[1]) / 2));
+  }
 
   const data = await spotifyFetch(`/recommendations?${params}`);
   return data.tracks;

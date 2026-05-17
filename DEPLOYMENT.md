@@ -8,9 +8,11 @@
 2. Click "Create app"
 3. Fill in:
    - **App name:** `Mood Playlist`
-   - **Redirect URI:** `http://localhost:5175/callback` (for now, we'll change this)
+   - **Redirect URIs:** (add BOTH of these)
+     - `http://localhost:8888/callback` (for local testing)
+     - `https://mood-playlist-app-chi.vercel.app/callback` (or your Vercel URL)
 4. Copy your **Client ID**
-5. Open `src/spotify.ts` and replace `YOUR_SPOTIFY_CLIENT_ID` with your Client ID
+5. Open `src/spotify.ts` and verify the Client ID is set correctly
 
 ### Step 2: Deploy to Vercel (100% FREE)
 
@@ -79,16 +81,29 @@ When you make changes:
 
 ---
 
-## ❓ Troubleshooting
+## 404 Error" when generating playlist:**
+- ✅ FIXED: The app was using invalid Spotify genre seeds
+- Make sure you've deployed the latest code to Vercel
+- Redeploy: Push changes to GitHub, Vercel auto-deploys
 
 **"Invalid Client" error:**
 - Make sure the redirect URI in Spotify dashboard matches your Vercel URL exactly
-- Must include `/callback` at the end
+- Must include BOTH redirect URIs:
+  - `http://localhost:8888/callback`
+  - `https://your-vercel-url.vercel.app/callback`
+
+**Can't login on Vercel:**
+- Check Spotify Developer Dashboard → Your App → Settings
+- Make sure your Vercel URL is added under "Redirect URIs"
+- Format: `https://mood-playlist-app-chi.vercel.app/callback`
 
 **App won't install on iPad:**
 - Make sure you're using Safari (not Chrome)
 - Check that PWA meta tags are in `index.html` (already added ✅)
 
 **Changes not showing:**
+- Wait 30 seconds after Vercel deployment
+- Hard refresh on iPad: Safari → Refresh button (tap and hold)
+- Or clear Safari cache: Settings → Safari → Clear History and Website Data
 - Wait 30 seconds after Vercel deployment
 - Hard refresh on iPad: Hold power button → slide to power off → power back on
