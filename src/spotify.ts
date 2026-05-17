@@ -161,7 +161,6 @@ export async function searchTracksByMood(mood: Mood, limit: number = 30): Promis
   // Build seed parameters
   const params = new URLSearchParams({
     limit: String(limit),
-    market: 'US',
   });
 
   // Add audio feature targets
@@ -188,34 +187,34 @@ export async function searchTracksByMood(mood: Mood, limit: number = 30): Promis
       const seedArtists = topArtists.items.slice(0, 3).map((a: any) => a.id).join(',');
       params.append('seed_artists', seedArtists);
     } else {
-      // Fallback: use genre seeds based on mood
+      // Fallback: use genre seeds based on mood (using valid Spotify genres)
       const genreMap: { [key: string]: string[] } = {
-        happy: ['pop', 'dance', 'party'],
+        happy: ['pop', 'dance', 'happy'],
         chill: ['chill', 'ambient', 'acoustic'],
-        workout: ['work-out', 'power', 'rock'],
-        sad: ['sad', 'piano', 'acoustic'],
-        party: ['party', 'dance', 'edm'],
-        romantic: ['romance', 'soul', 'r-n-b'],
-        sleep: ['sleep', 'ambient', 'piano'],
-        focus: ['study', 'classical', 'instrumental'],
+        workout: ['rock', 'metal', 'hip-hop'],
+        sad: ['sad', 'piano', 'indie'],
+        party: ['party', 'dance', 'electronic'],
+        romantic: ['romance', 'soul', 'jazz'],
+        sleep: ['sleep', 'ambient', 'classical'],
+        focus: ['classical', 'ambient', 'piano'],
       };
       const genres = genreMap[mood.id] || ['pop', 'indie', 'alternative'];
-      params.append('seed_genres', genres.join(','));
+      params.append('seed_genres', genres.slice(0, 3).join(','));
     }
   } catch (error) {
-    // Fallback: use genre seeds
+    // Fallback: use genre seeds (using valid Spotify genres)
     const genreMap: { [key: string]: string[] } = {
-      happy: ['pop', 'dance', 'party'],
+      happy: ['pop', 'dance', 'happy'],
       chill: ['chill', 'ambient', 'acoustic'],
-      workout: ['work-out', 'power', 'rock'],
-      sad: ['sad', 'piano', 'acoustic'],
-      party: ['party', 'dance', 'edm'],
-      romantic: ['romance', 'soul', 'r-n-b'],
-      sleep: ['sleep', 'ambient', 'piano'],
-      focus: ['study', 'classical', 'instrumental'],
+      workout: ['rock', 'metal', 'hip-hop'],
+      sad: ['sad', 'piano', 'indie'],
+      party: ['party', 'dance', 'electronic'],
+      romantic: ['romance', 'soul', 'jazz'],
+      sleep: ['sleep', 'ambient', 'classical'],
+      focus: ['classical', 'ambient', 'piano'],
     };
     const genres = genreMap[mood.id] || ['pop', 'indie', 'alternative'];
-    params.append('seed_genres', genres.join(','));
+    params.append('seed_genres', genres.slice(0, 3).join(','));
   }
 
   const data = await spotifyFetch(`/recommendations?${params}`);
