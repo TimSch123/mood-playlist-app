@@ -14,6 +14,18 @@
 4. Copy your **Client ID**
 5. Open `src/spotify.ts` and verify the Client ID is set correctly
 
+**IMPORTANT: Enable Playlist Creation**
+
+Since the app is in Development Mode, you need to add users who can create playlists:
+
+1. In the Spotify Developer Dashboard, open your app
+2. Click **"Users and Access"** (or "Settings" → "User Management")
+3. Click **"Add New User"**
+4. Enter the Spotify email/username of anyone who should create playlists
+5. Click "Add"
+
+**Note:** You can add up to 25 users in Development Mode. Everyone else can still VIEW and GENERATE playlists - they just can't save them to Spotify (they can use the "Copy List" button instead).
+
 ### Step 2: Deploy to Vercel (100% FREE)
 
 1. **Create a GitHub account** (if you don't have one): https://github.com/signup
@@ -81,7 +93,15 @@ When you make changes:
 
 ---
 
-## 404 Error" when generating playlist:**
+## ❓ Troubleshooting
+
+**"403 Forbidden" when saving playlist:**
+- The app is in Development Mode (max 25 users can create playlists)
+- **Solution 1:** Add your Spotify email in Developer Dashboard → Users and Access
+- **Solution 2:** Use the "📋 Copy List" button to copy tracks and manually create playlist
+- **Solution 3:** Request Extended Quota Mode (see below)
+
+**"404 Error" when generating playlist:**
 - ✅ FIXED: The app was using invalid Spotify genre seeds
 - Make sure you've deployed the latest code to Vercel
 - Redeploy: Push changes to GitHub, Vercel auto-deploys
@@ -105,5 +125,20 @@ When you make changes:
 - Wait 30 seconds after Vercel deployment
 - Hard refresh on iPad: Safari → Refresh button (tap and hold)
 - Or clear Safari cache: Settings → Safari → Clear History and Website Data
-- Wait 30 seconds after Vercel deployment
+
+---
+
+## 🚀 Request Extended Quota Mode (Optional)
+
+To remove the 25-user limit and enable playlist creation for everyone:
+
+1. Go to https://developer.spotify.com/dashboard
+2. Open your app
+3. Look for **"Request Extension"** or **"Quota Extension"** button
+4. Fill out the form:
+   - **Use case:** Personal mood-based playlist generator
+   - **Description:** Creates personalized playlists based on moods for personal use
+5. Submit and wait for approval (usually 1-2 weeks)
+
+Once approved, anyone can create playlists without being added to the user list!
 - Hard refresh on iPad: Hold power button → slide to power off → power back on

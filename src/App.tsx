@@ -94,13 +94,45 @@ function App() {
       const trackUris = generatedTracks.map((track) => track.uri);
       await createPlaylistOnSpotify(user.id, playlistName, trackUris);
       setPlaylistCreated(true);
-      alert(`Playlist "${playlistName}" created successfully! Check your Spotify app.`);
-    } catch (error) {
+      alert(`✅ Playlist "${playlistName}" created successfully!\n\nCheck your Spotify app - it should appear in "Your Library" → "Playlists"`);
+    } catch (error: any) {
       console.error('Failed to create playlist:', error);
-      alert('Failed to create playlist. Please try again.');
+      
+      // Better error messages
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
+        alert(`⚠️ Spotify Development Mode Restriction\n\nTo create playlists, you need to:\n\n1. Go to developer.spotify.com/dashboard\n2. Open your app\n3. Click "Users and Access"\n4. Add your Spotify email\n5. Then try again!\n\n(Or wait for Extended Quota approval)`);
+      } else if (errorMessage.includes('401') || errorMessage.includes('token')) {
+        alert(`🔑 Session Expired\n\nPlease logout and log back in to create playlists.`);
+      } else {
+        alert(`❌ Failed to create playlist\n\nError: ${errorMessage}\n\nTry:\n• Logging out and back in\n• Checking your internet connection`);
+      }
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleCopyTrackList = () => {
+    if (generatedTracks.length === 0) return;
+    
+    // Create a formatted text list
+    const trackList = generatedTracks.map((track, i) => 
+      `${i + 1}. ${track.name} - ${track.artists.map(a => a.name).join(', ')}`
+    ).join('\n');
+    
+    const playlistName = vibeMode 
+      ? `🎵 Vibe Mix - ${new Date().toLocaleDateString()}`
+      : `${selectedMood?.emoji} ${selectedMood?.name} - ${new Date().toLocaleDateString()}`;
+    
+    const fullText = `${playlistName}\n\n${trackList}`;
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(fullText).then(() => {
+      alert(`📋 Copied ${generatedTracks.length} tracks to clipboard!\n\nYou can paste this into notes or manually search for these songs in Spotify.`);
+    }).catch(() => {
+      // Fallback: show the text
+      prompt('Copy this track list:', fullText);
+    });
   };
 
   const handleSearch = async () => {
@@ -396,13 +428,22 @@ function App() {
               <h2 className="text-2xl font-bold">
                 {vibeMode ? '🎵 Your Vibe Playlist' : `${selectedMood?.emoji} Your ${selectedMood?.name} Playlist`}
               </h2>
-              <button
-                onClick={handleCreatePlaylist}
-                disabled={playlistCreated}
-                className="bg-spotify-green hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {playlistCreated ? '✅ Saved!' : 'Save to Spotify'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCopyTrackList}
+                  className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-full transition-colors text-sm"
+                  title="Copy track list to clipboard"
+                >
+                  📋 Copy List
+                </button>
+                <button
+                  onClick={handleCreatePlaylist}
+                  disabled={playlistCreated}
+                  className="bg-spotify-green hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {playlistCreated ? '✅ Saved!' : 'Save to Spotify'}
+                </button>
+              </div>
             </div>
             <p className="text-gray-600 mb-4">{generatedTracks.length} tracks</p>
             <div className="space-y-3 max-h-[500px] overflow-y-auto">
